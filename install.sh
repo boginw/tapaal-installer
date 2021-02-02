@@ -6,9 +6,14 @@ DESKTOP_DIR=/usr/share/applications
 JAVA_MIN_VERSION=11
 TAPAAL_LINK=https://download.tapaal.net/tapaal/tapaal-3.7/tapaal-3.7.1-linux64.zip
 TAPAAL_DIR=tapaal-3.7.1-linux64
+WARNING='\033[0;33m'
+ERROR='\033[0;31m'
+INFO='\033[0;32m'
+NC='\033[0m'
 
 # Need to operate as super user
 if [[ $EUID -ne 0 ]]; then
+   printf "${ERROR}Error:${NC} "
    echo "This script must be run as root" 
    exit 1
 fi
@@ -23,6 +28,7 @@ help() {
 }
 
 invalid() {
+   printf "${ERROR}Error:${NC} "
    echo "Invalid options"
    help
 }
@@ -36,16 +42,16 @@ uninstall() {
 
 sdkman_warning() {
    echo ""
-   echo "If you are using SDKMAN and have a new version of Java installed,"
-   echo "try initializing SDKMAN in ~/.profile as well as in ~/.bash_profile"
+   echo "    If you are using SDKMAN and have a new version of Java installed,"
+   echo "    try initializing SDKMAN in ~/.profile as well as in ~/.bash_profile"
 }
 
 install() {
    # Check if Java is installed and loaded without .bashrc
    if [[ -z $(bash --norc -c "which java") ]]; then
+      printf "${WARNING}Warning:${NC} "
       echo "Java is required but does not seem to be installed"
       sdkman_warning
-      exit 1
    fi
 
    JAVA_VERSION_NORC=$(bash --norc << EOM
@@ -56,15 +62,16 @@ EOM
    JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f2 | sed '/^1\./s///' | cut -d'.' -f1)
 
    if [[ $JAVA_VERSION_NORC != $JAVA_VERSION ]]; then
-      echo "Warning:"
+      printf "${WARNING}Warning:${NC} "
       sdkman_warning
+      echo ${NC}
    fi
 
    # Check if the Java version used when .bashrc is not loaded satisfies minimal requirements
    if [[ $JAVA_VERSION -lt $JAVA_MIN_VERSION ]]; then
-      echo "Warning:"
+      printf "${WARNING}Warning:${NC} "
       echo "The currently installed Java version (version $JAVA_VERSION) is too old"
-      echo "The minimal requirement is Java $JAVA_MIN_VERSION"
+      echo "    The minimal requirement is Java $JAVA_MIN_VERSION"
       sdkman_warning
    fi
 
@@ -99,19 +106,27 @@ EOM
    chmod +x tapaal.desktop
 
    # Validate and install desktop file
-   desktop-file-install --dir=$DESKTOP_DIR tapaal.desktop 
+   desktop-file-install --dir=$DESKTOP_DIR tapaal.desktop
+
+   printf "${INFO}Info:${NC} Successfully Installed TAPAAL\n"
 }
 
 download() {
-   wget $TAPAAL_LINK
-   unzip $TAPAAL_DIR.zip
+   printf "${INFO}Info:${NC} Downloading TAPAAL\n"
+   wget -q $TAPAAL_LINK
+   printf "${INFO}Info:${NC} Extracting TAPAAL\n"
+   unzip -q $TAPAAL_DIR.zip
    rm -f $TAPAAL_DIR.zip
+   RET=$PWD
    cd $TAPAAL_DIR
-   wget https://github.com/TAPAAL/tapaal-gui/raw/master/src/resources/Images/tapaal-icon.png
+   printf "${INFO}Info:${NC} Downloading TAPAAL icon\n"
+   wget -q https://github.com/TAPAAL/tapaal-gui/raw/master/src/resources/Images/tapaal-icon.png
    mv tapaal-icon.png icon.png
+   printf "${INFO}Info:${NC} Extracting TAPAAL\n"
    install
-   cd ..
-   rm -rf $TAPAAL_DIR/
+   printf "${INFO}Info:${NC} Cleanup\n"
+   cd $RET
+   rm -rf $TAPAAL_DIR
    exit 0
 }
 
