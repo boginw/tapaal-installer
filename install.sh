@@ -4,8 +4,10 @@ INSTALL_DIR=/opt/tapaal
 EXEC_DIR=/usr/bin
 DESKTOP_DIR=/usr/share/applications
 JAVA_MIN_VERSION=11
-TAPAAL_LINK=https://download.tapaal.net/tapaal/tapaal-3.7/tapaal-3.7.1-linux64.zip
-TAPAAL_DIR=tapaal-3.7.1-linux64
+
+#TAPAAL_LINK=https://download.tapaal.net/tapaal/tapaal-3.7/tapaal-3.7.1-linux64.zip
+#TAPAAL_DIR=tapaal-3.7.1-linux64
+
 WARNING='\033[0;33m'
 ERROR='\033[0;31m'
 INFO='\033[0;32m'
@@ -112,6 +114,12 @@ EOM
 }
 
 download() {
+   if [ -z ${TAPAAL_LINK+x} ]; then
+      printf "${INFO}Info:${NC} Fetching newest TAPAAL version\n"
+      TAPAAL_LINK=${TAPAAL_LINK:=$(curl -s http://www.tapaal.net/download/ | grep -Eo "https://download.tapaal.net/tapaal/tapaal-[^/]*/tapaal-[^/]*-linux64.zip")}
+      TAPAAL_DIR=${TAPAAL_DIR:=$(basename $TAPAAL_LINK | sed 's/\.[^.]*$//')}
+      printf "${INFO}Info:${NC} Found TAPAAL version \"$TAPAAL_DIR\"\n"
+   fi
    printf "${INFO}Info:${NC} Downloading TAPAAL\n"
    wget -q $TAPAAL_LINK
    printf "${INFO}Info:${NC} Extracting TAPAAL\n"
